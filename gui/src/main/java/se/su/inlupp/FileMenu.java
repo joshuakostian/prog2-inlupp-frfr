@@ -22,7 +22,9 @@ public class FileMenu {
 
     newMap.setOnAction(e -> ctrl.loadMapImage(null));
     saveMap.setOnAction(e -> ctrl.saveMap());
-    exit.setOnAction(e -> stage.close());
+    exit.setOnAction(e -> {
+      if (ctrl.continueWithoutSaving()) stage.close();
+    });
     openMap.setOnAction(e->ctrl.openMap());
     saveImage.setOnAction(e-> ctrl.saveImage());
 

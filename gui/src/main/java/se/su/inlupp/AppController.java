@@ -43,18 +43,24 @@ import javax.imageio.ImageIO;
 
 public class AppController {
 
-  private final Graph<Location> graph = new ListGraph<Location>();
+  private Graph<Location> graph = new ListGraph<Location>();
   private ArrayList<Location> selectedLocations = new ArrayList<>();
   private MapMenu mapMenu;
   private ImageContainer imageContainer;
   private boolean isPlacingNode = false;
   private Stage stage;
+  private boolean isUnsaved = false;
 
   public AppController(ImageContainer imageContainer, Stage stage) {
     this.imageContainer = imageContainer;
     this.stage = stage;
+    stage.setOnCloseRequest(e -> {
+      if (isUnsaved && !continueWithoutSaving()) {
+        e.consume();
+      }
+    });
   }
-
+  
   public void setMapMenu(MapMenu mapMenu) {
     this.mapMenu = mapMenu;
   }
@@ -64,6 +70,9 @@ public class AppController {
   }
 
   public void loadMapImage(Image inputImage) {
+    if (isUnsaved && !continueWithoutSaving()) {
+      return;
+    }
 
     Image image = inputImage;
     if (inputImage == null) {
@@ -78,6 +87,8 @@ public class AppController {
         return;
       }
       image = new Image(selectedFile.toURI().toString());
+      
+      isUnsaved = true;
     }
 
     imageContainer.getImageContainer().setMaxSize(image.getWidth(), image.getHeight());
@@ -92,6 +103,9 @@ public class AppController {
     mapMenu.setButtonsDisabled(false);
     stage.sizeToScene();
 
+    selectedLocations = new ArrayList<>();
+    graph = new ListGraph<Location>();
+    render();
   }
 
   public void addNewPlace() {
@@ -126,6 +140,7 @@ public class AppController {
           }
         }
         graph.add(location);
+        isUnsaved = true;
         render();
       });
     });
@@ -147,6 +162,8 @@ public class AppController {
     String[] res = result.get();
 
     graph.connect(loc1, loc2, res[0], Integer.parseInt(res[1]));
+    isUnsaved = true;
+
     render();
 
     setIsMarked(loc1);
@@ -184,6 +201,9 @@ public class AppController {
     if (result.isEmpty())
       return;
     edge.setWeight(Integer.parseInt(result.get()[1]));
+
+    isUnsaved = true;
+
     render();
   }
 
@@ -299,6 +319,17 @@ public class AppController {
     error.showAndWait();
   }
 
+  public boolean continueWithoutSaving() {
+    Alert alert = new Alert(AlertType.CONFIRMATION);
+    alert.setTitle("Warning");
+    alert.setHeaderText("You have unsaved changes");
+    alert.setContentText("Continue anyway?");
+
+    Optional<ButtonType> result = alert.showAndWait();
+
+    return result.get() == ButtonType.OK ? true : false;
+  }
+
   public void saveMap() {
     TextInputDialog dialog = new TextInputDialog();
     dialog.setTitle("Save Map");
@@ -334,11 +365,17 @@ public class AppController {
     } catch (Exception e) {
       System.out.println("Exception Här pls");
     }
+
+    isUnsaved = false;
     Alert alert = new Alert(AlertType.CONFIRMATION, "YES!");
     alert.show();
   }
 
   public void openMap() {
+    if (isUnsaved && !continueWithoutSaving()) {
+      return;
+    }
+
     // file
     FileChooser fileChooser = new FileChooser();
     fileChooser.setTitle("New Map");
@@ -349,11 +386,11 @@ public class AppController {
     if (file == null || !file.exists()) {
       return;
     }
-    // file
-
+    
     try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
       File imageFile = new File(reader.readLine());
-
+      loadMapImage(new Image(imageFile.toString()));
+      
       // line 1
       Pattern pattern = Pattern.compile("(\\w+);(\\d+.\\d+);(\\d+.\\d+);");
       Matcher matcher = pattern.matcher(reader.readLine());
@@ -377,7 +414,6 @@ public class AppController {
           graph.connect(l1, l2, name, weight);
         }
       }
-      loadMapImage(new Image(imageFile.toString()));
       render();
     } catch (Exception e) {
       System.out.println(e);
