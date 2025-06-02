@@ -7,9 +7,6 @@
 package se.su.inlupp;
 
 import javafx.scene.layout.Pane;
-
-import java.util.Comparator;
-
 import javafx.scene.control.Label;
 import javafx.scene.shape.Circle;
 import javafx.scene.paint.*;

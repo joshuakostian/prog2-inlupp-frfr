@@ -6,12 +6,9 @@
 
 package se.su.inlupp;
 
-import java.io.File;
-
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public class FileMenu {
