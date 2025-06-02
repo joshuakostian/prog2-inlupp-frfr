@@ -66,8 +66,9 @@ public class ListGraph<T> implements Graph<T> {
   @Override
   public T getNode(String name) {
     for (T t : connections.keySet()) {
-      t.equals(name);
-      return t;
+      if (t.toString().equals(name)) {
+        return t;
+      }
     }
     return null;
   }

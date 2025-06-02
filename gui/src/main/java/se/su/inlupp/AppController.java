@@ -14,6 +14,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Cursor;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -24,6 +25,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundImage;
 import javafx.scene.layout.BackgroundPosition;
@@ -35,6 +37,9 @@ import javafx.scene.shape.Line;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import java.util.regex.*;
+import java.awt.image.BufferedImage;
+
+import javax.imageio.ImageIO;
 
 public class AppController {
 
@@ -72,7 +77,7 @@ public class AppController {
       if (selectedFile == null || !selectedFile.exists()) {
         return;
       }
-      image = new Image(selectedFile.toURI().toString()); 
+      image = new Image(selectedFile.toURI().toString());
     }
 
     imageContainer.getImageContainer().setMaxSize(image.getWidth(), image.getHeight());
@@ -163,19 +168,15 @@ public class AppController {
   }
 
   public void changeConnection() {
-    System.out.println("hej");
     if (selectedLocations.size() != 2) {
-      System.out.println("inside");
       return;
     }
-    System.out.println("hello");
     Location loc1 = selectedLocations.getFirst();
     Location loc2 = selectedLocations.getLast();
     if (graph.getEdgeBetween(loc1, loc2) == null) {
       return;
     }
 
-    System.out.println(loc1.toString() + "      " + loc2.toString());
     Edge<Location> edge = graph.getEdgeBetween(loc1, loc2);
     Optional<String[]> result = connectionDialog("Change Connection",
         "Connection from " + loc1.getName() + " to " + loc2.getName(), false, true, edge.getName(),
@@ -314,7 +315,6 @@ public class AppController {
     String imagePath = imageContainer.getImage().getUrl();
 
     Path path = Paths.get(System.getProperty("user.dir"), fileName + ".graph");
-    System.out.println(path.toString());
 
     File file = path.toFile();
 
@@ -373,18 +373,27 @@ public class AppController {
         Location l2 = graph.getNode(e[1]);
         String name = e[2];
         int weight = Integer.parseInt(e[3]);
-        System.out.println(line);
         if (graph.getEdgeBetween(l1, l2) == null) {
           graph.connect(l1, l2, name, weight);
         }
       }
-      System.out.println(graph.toString());
       loadMapImage(new Image(imageFile.toString()));
       render();
     } catch (Exception e) {
       System.out.println(e);
     }
 
+  }
+
+  public void saveImage() {
+    try {
+      WritableImage image = imageContainer.getImageContainer().snapshot(null, null);
+      BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
+      ImageIO.write(bufferedImage, "png", new File("../capture.png"));
+    } catch (IOException e) {
+      Alert alert = new Alert(Alert.AlertType.ERROR, "IO Error");
+      alert.showAndWait();
+    }
   }
 
   public ArrayList<Location> getSelection() {
