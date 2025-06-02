@@ -11,6 +11,7 @@ import javafx.scene.text.FontWeight;
 public class Location extends Pane {
   private Circle circle;
   private Label label;
+  private String name;
   private double x;
   private double y;
   private final int size = 10;
@@ -19,6 +20,7 @@ public class Location extends Pane {
   public Location(AppController ctrl, String name, double x, double y) {
     this.x = x;
     this.y = y;
+    this.name = name;
 
     this.setPrefSize(size, size);
     this.setMinSize(size, size);
@@ -34,15 +36,13 @@ public class Location extends Pane {
     // fyfan vad jag hatar dropshadow. dumma carl!!
     this.label.setEffect(new DropShadow(2, Color.WHITESMOKE));
 
-    // circle.setOnMouseClicked(click -> {
-    // if (ctrl.getSelection().size() >= 2 && !isMarked)
-    // return;
-    // setIsMarked(!isMarked, ctrl);
-    // });
-    //
     circle.setOnMouseClicked(e -> ctrl.setIsMarked(this));
 
     getChildren().addAll(circle, label);
+  }
+
+  public String getName() {
+    return name;
   }
 
   public double getX() {
@@ -64,15 +64,4 @@ public class Location extends Pane {
   public void setColor(Color color) {
     circle.setFill(color);
   }
-
-  // public void setIsMarked(boolean b, AppController ctrl) {
-  // isMarked = b;
-  // if (isMarked) {
-  // circle.setFill(Color.BLUE);
-  // ctrl.addSelection(this);
-  // } else {
-  // circle.setFill(Color.CRIMSON);
-  // ctrl.removeSelection(this);
-  // }
-  // }
 }

@@ -21,6 +21,7 @@ public class FileMenu {
     MenuItem exit = new MenuItem("Exit");
 
     newMap.setOnAction(e -> addNewMap(ctrl, stage));
+    saveMap.setOnAction(e -> ctrl.saveMap());
     exit.setOnAction(e -> stage.close());
 
     menu.getItems().addAll(newMap, openMap, saveMap, saveImage, exit);

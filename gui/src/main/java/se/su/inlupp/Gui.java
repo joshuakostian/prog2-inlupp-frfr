@@ -4,7 +4,6 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.MenuBar;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -14,7 +13,7 @@ public class Gui extends Application {
 
     // Root
     BorderPane root = new BorderPane();
-    Pane imageContainer = new ImageContainer(stage).getImageContainer();
+    ImageContainer imageContainer = new ImageContainer(stage);
 
     AppController ctrl = new AppController(imageContainer);
 
@@ -26,7 +25,7 @@ public class Gui extends Application {
     top.getChildren().addAll(fileMenu, mapMenu.getMapMenu());
 
     root.setTop(top);
-    root.setCenter(imageContainer);
+    root.setCenter(imageContainer.getImageContainer());
 
     // Draw Scene
     Scene scene = new Scene(root);

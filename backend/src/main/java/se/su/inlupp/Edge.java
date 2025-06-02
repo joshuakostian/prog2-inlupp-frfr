@@ -24,6 +24,10 @@ public class Edge<T> {
     this.weight = weight;
   }
 
+  public T getSource() {
+    return source;
+  }
+
   public T getDestination() {
     return destination;
   }
