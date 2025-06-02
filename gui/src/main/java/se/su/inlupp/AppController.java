@@ -14,6 +14,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Cursor;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -24,6 +25,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundImage;
 import javafx.scene.layout.BackgroundPosition;
@@ -35,6 +37,9 @@ import javafx.scene.shape.Line;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import java.util.regex.*;
+import java.awt.image.BufferedImage;
+
+import javax.imageio.ImageIO;
 
 public class AppController {
 
@@ -58,24 +63,23 @@ public class AppController {
     this.imageContainer = imageContainer;
   }
 
-  public void loadMapImage(File file) {
+  public void loadMapImage(Image inputImage) {
 
-    File selectedFile = new File("");
-
-    if (file == null) {
+    Image image = inputImage;
+    if (inputImage == null) {
       FileChooser fileChooser = new FileChooser();
       fileChooser.setTitle("New Map");
 
       fileChooser.getExtensionFilters().addAll(
           new FileChooser.ExtensionFilter("GIF", "*.gif"));
 
-      selectedFile = fileChooser.showOpenDialog(stage);
+      File selectedFile = fileChooser.showOpenDialog(stage);
       if (selectedFile == null || !selectedFile.exists()) {
         return;
       }
+      image = new Image(selectedFile.toURI().toString());
     }
 
-    Image image = new Image(selectedFile.toURI().toString());
     imageContainer.getImageContainer().setMaxSize(image.getWidth(), image.getHeight());
     imageContainer.getImageContainer().setMinSize(image.getWidth(), image.getHeight());
 
@@ -86,8 +90,8 @@ public class AppController {
     imageContainer.getImageContainer().setBackground(background);
     imageContainer.saveImage(image);
     mapMenu.setButtonsDisabled(false);
-
     stage.sizeToScene();
+
   }
 
   public void addNewPlace() {
@@ -122,7 +126,6 @@ public class AppController {
           }
         }
         graph.add(location);
-
         render();
       });
     });
@@ -165,19 +168,15 @@ public class AppController {
   }
 
   public void changeConnection() {
-    System.out.println("hej");
     if (selectedLocations.size() != 2) {
-      System.out.println("inside");
       return;
     }
-    System.out.println("hello");
     Location loc1 = selectedLocations.getFirst();
     Location loc2 = selectedLocations.getLast();
     if (graph.getEdgeBetween(loc1, loc2) == null) {
       return;
     }
 
-    System.out.println(loc1.toString() + "      " + loc2.toString());
     Edge<Location> edge = graph.getEdgeBetween(loc1, loc2);
     Optional<String[]> result = connectionDialog("Change Connection",
         "Connection from " + loc1.getName() + " to " + loc2.getName(), false, true, edge.getName(),
@@ -316,7 +315,6 @@ public class AppController {
     String imagePath = imageContainer.getImage().getUrl();
 
     Path path = Paths.get(System.getProperty("user.dir"), fileName + ".graph");
-    System.out.println(path.toString());
 
     File file = path.toFile();
 
@@ -355,20 +353,18 @@ public class AppController {
 
     try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
       File imageFile = new File(reader.readLine());
-      loadMapImage(imageFile);
+
       // line 1
-      System.out.println("line1 complete \n " + imageFile.getName());
-      Pattern pattern = Pattern.compile("(\\w+);(\\d+);(\\d+);");
+      Pattern pattern = Pattern.compile("(\\w+);(\\d+.\\d+);(\\d+.\\d+);");
       Matcher matcher = pattern.matcher(reader.readLine());
 
       while (matcher.find()) {
         String name = matcher.group(1);
-        int x = Integer.parseInt(matcher.group(2));
-        int y = Integer.parseInt(matcher.group(3));
+        double x = Double.parseDouble(matcher.group(2));
+        double y = Double.parseDouble(matcher.group(3));
         Location l = new Location(this, name, x, y);
         graph.add(l);
       }
-      System.out.println("Line2 Complete" + "\n" + graph.toString());
       // line 2
       String line;
       while ((line = reader.readLine()) != null) {
@@ -377,14 +373,27 @@ public class AppController {
         Location l2 = graph.getNode(e[1]);
         String name = e[2];
         int weight = Integer.parseInt(e[3]);
-
-        graph.connect(l1, l2, name, weight);
+        if (graph.getEdgeBetween(l1, l2) == null) {
+          graph.connect(l1, l2, name, weight);
+        }
       }
-      // pls funka
+      loadMapImage(new Image(imageFile.toString()));
+      render();
     } catch (Exception e) {
       System.out.println(e);
     }
 
+  }
+
+  public void saveImage() {
+    try {
+      WritableImage image = imageContainer.getImageContainer().snapshot(null, null);
+      BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
+      ImageIO.write(bufferedImage, "png", new File("../capture.png"));
+    } catch (IOException e) {
+      Alert alert = new Alert(Alert.AlertType.ERROR, "IO Error");
+      alert.showAndWait();
+    }
   }
 
   public ArrayList<Location> getSelection() {

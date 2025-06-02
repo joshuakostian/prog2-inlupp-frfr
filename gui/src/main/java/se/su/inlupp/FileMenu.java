@@ -24,6 +24,7 @@ public class FileMenu {
     saveMap.setOnAction(e -> ctrl.saveMap());
     exit.setOnAction(e -> stage.close());
     openMap.setOnAction(e->ctrl.openMap());
+    saveImage.setOnAction(e-> ctrl.saveImage());
 
     menu.getItems().addAll(newMap, openMap, saveMap, saveImage, exit);
 
