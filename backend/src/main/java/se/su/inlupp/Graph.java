@@ -1,3 +1,9 @@
+// PROG2 VT2025, inlämningsuppgift, del 2
+// Grupp 269
+// Ville Viljanen vivi8475
+// Joshua Kostian 5833
+// Carl Thomasson cath8913
+
 package se.su.inlupp;
 
 import java.util.Collection;
