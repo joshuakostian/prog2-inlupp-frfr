@@ -1,6 +1,9 @@
 package se.su.inlupp;
 
 import javafx.scene.layout.Pane;
+
+import java.util.Comparator;
+
 import javafx.scene.control.Label;
 import javafx.scene.shape.Circle;
 import javafx.scene.paint.*;
@@ -41,6 +44,7 @@ public class Location extends Pane {
     getChildren().addAll(circle, label);
   }
 
+
   public String getName() {
     return name;
   }
@@ -64,4 +68,23 @@ public class Location extends Pane {
   public void setColor(Color color) {
     circle.setFill(color);
   }
+
+
+  @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true; // samma objekt
+      if (o == null || getClass() != o.getClass())
+        return false;
+      Location other = (Location) o;
+
+      if (this.label.getText().equalsIgnoreCase(other.label.getText())) {
+        return true;
+      }
+      return false;
+    }
+    @Override
+    public String toString(){
+      return name;
+    }
 }

@@ -20,9 +20,10 @@ public class FileMenu {
     MenuItem saveImage = new MenuItem("Save Image");
     MenuItem exit = new MenuItem("Exit");
 
-    newMap.setOnAction(e -> addNewMap(ctrl, stage));
+    newMap.setOnAction(e -> ctrl.loadMapImage(null));
     saveMap.setOnAction(e -> ctrl.saveMap());
     exit.setOnAction(e -> stage.close());
+    openMap.setOnAction(e->ctrl.openMap());
 
     menu.getItems().addAll(newMap, openMap, saveMap, saveImage, exit);
 
@@ -34,17 +35,6 @@ public class FileMenu {
     return bar;
   }
 
-  public void addNewMap(AppController ctrl, Stage stage) {
-    FileChooser fileChooser = new FileChooser();
-    fileChooser.setTitle("New Map");
-    fileChooser.getExtensionFilters().addAll(
-        new FileChooser.ExtensionFilter("GIF", "*.gif"),
-        new FileChooser.ExtensionFilter("GRAPH", "*.graph"));
 
-    File selectedFile = fileChooser.showOpenDialog(stage);
-    if (selectedFile != null) {
-      ctrl.loadMapImage(selectedFile);
-    }
-  }
 
 }

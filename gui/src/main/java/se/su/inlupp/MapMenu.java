@@ -27,7 +27,9 @@ public class MapMenu {
 
     newPlace.setOnAction(e -> ctrl.addNewPlace());
     newConnection.setOnAction(e -> ctrl.addNewConnection());
-    showConnection.setOnAction((e -> ctrl.showConnection()));
+    showConnection.setOnAction(e -> ctrl.showConnection());
+    changeConnection.setOnAction(e -> ctrl.changeConnection());
+    findPath.setOnAction(e -> ctrl.findPath());
 
     buttons.addAll(List.of(findPath, showConnection, newPlace, newConnection, changeConnection));
     menu.getChildren().addAll(findPath, showConnection, newPlace, newConnection, changeConnection);
