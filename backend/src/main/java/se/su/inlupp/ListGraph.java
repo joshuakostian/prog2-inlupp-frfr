@@ -63,6 +63,14 @@ public class ListGraph<T> implements Graph<T> {
     res.addAll(connections.keySet());
     return res;
   }
+  @Override
+  public T getNode(String name) {
+    for (T t : connections.keySet()) {
+      t.equals(name);
+      return t;
+    }
+    return null;
+  }
 
   @Override
   public Collection<Edge<T>> getEdgesFrom(T node) {
@@ -176,4 +184,5 @@ public class ListGraph<T> implements Graph<T> {
   private boolean nodesExist(T node1, T node2) {
     return connections.containsKey(node1) && connections.containsKey(node2);
   }
+
 }

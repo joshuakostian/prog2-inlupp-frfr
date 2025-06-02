@@ -1,13 +1,19 @@
 package se.su.inlupp;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
+
 import javafx.scene.Cursor;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -26,6 +32,9 @@ import javafx.scene.layout.BackgroundSize;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import java.util.regex.*;
 
 public class AppController {
 
@@ -34,9 +43,11 @@ public class AppController {
   private MapMenu mapMenu;
   private ImageContainer imageContainer;
   private boolean isPlacingNode = false;
+  private Stage stage;
 
-  public AppController(ImageContainer imageContainer) {
+  public AppController(ImageContainer imageContainer, Stage stage) {
     this.imageContainer = imageContainer;
+    this.stage = stage;
   }
 
   public void setMapMenu(MapMenu mapMenu) {
@@ -48,7 +59,23 @@ public class AppController {
   }
 
   public void loadMapImage(File file) {
-    Image image = new Image(file.toURI().toString());
+
+    File selectedFile = new File("");
+
+    if (file == null) {
+      FileChooser fileChooser = new FileChooser();
+      fileChooser.setTitle("New Map");
+
+      fileChooser.getExtensionFilters().addAll(
+          new FileChooser.ExtensionFilter("GIF", "*.gif"));
+
+      selectedFile = fileChooser.showOpenDialog(stage);
+      if (selectedFile == null || !selectedFile.exists()) {
+        return;
+      }
+    }
+
+    Image image = new Image(selectedFile.toURI().toString());
     imageContainer.getImageContainer().setMaxSize(image.getWidth(), image.getHeight());
     imageContainer.getImageContainer().setMinSize(image.getWidth(), image.getHeight());
 
@@ -58,8 +85,9 @@ public class AppController {
     Background background = new Background(backgroundImage);
     imageContainer.getImageContainer().setBackground(background);
     imageContainer.saveImage(image);
-
     mapMenu.setButtonsDisabled(false);
+
+    stage.sizeToScene();
   }
 
   public void addNewPlace() {
@@ -86,6 +114,13 @@ public class AppController {
       Optional<String> result = dialog.showAndWait();
       result.ifPresent(name -> {
         Location location = new Location(this, name, x, y);
+        for (Location l : graph.getNodes()) {
+          if (l.equals(location)) {
+            Alert alert = new Alert(AlertType.ERROR, "Name is the same as a current node");
+            alert.show();
+            return;
+          }
+        }
         graph.add(location);
 
         render();
@@ -97,16 +132,18 @@ public class AppController {
     if (selectedLocations.size() != 2)
       return;
 
-    Optional<String[]> result = connectionDialog("New Connection", "Add new connection", true, true);
-    if (result.isEmpty())
-      return;
-
-    String[] res = result.get();
     Location loc1 = selectedLocations.get(0);
     Location loc2 = selectedLocations.get(1);
 
-    graph.connect(loc1, loc2, res[0], Integer.parseInt(res[1]));
+    if (graph.getEdgeBetween(loc1, loc2) != null) {
+      return;
+    }
+    Optional<String[]> result = connectionDialog("New Connection", "Add new connection", true, true, "", "");
+    if (result.isEmpty())
+      return;
+    String[] res = result.get();
 
+    graph.connect(loc1, loc2, res[0], Integer.parseInt(res[1]));
     render();
 
     setIsMarked(loc1);
@@ -121,6 +158,60 @@ public class AppController {
 
     if (graph.getEdgeBetween(loc1, loc2) == null)
       return;
+    Edge<Location> edge = graph.getEdgeBetween(loc1, loc2);
+    connectionDialog("Show Connection", "Connection from " + loc1.getName() + " to " + loc2.getName(), false, false,
+        edge.getName(), "" + edge.getWeight());
+    return;
+  }
+
+  public void changeConnection() {
+    System.out.println("hej");
+    if (selectedLocations.size() != 2) {
+      System.out.println("inside");
+      return;
+    }
+    System.out.println("hello");
+    Location loc1 = selectedLocations.getFirst();
+    Location loc2 = selectedLocations.getLast();
+    if (graph.getEdgeBetween(loc1, loc2) == null) {
+      return;
+    }
+
+    System.out.println(loc1.toString() + "      " + loc2.toString());
+    Edge<Location> edge = graph.getEdgeBetween(loc1, loc2);
+    Optional<String[]> result = connectionDialog("Change Connection",
+        "Connection from " + loc1.getName() + " to " + loc2.getName(), false, true, edge.getName(),
+        "" + edge.getWeight());
+    if (result.isEmpty())
+      return;
+    edge.setWeight(Integer.parseInt(result.get()[1]));
+    render();
+  }
+
+  public void findPath() {
+    if (selectedLocations.size() != 2) {
+      return;
+    }
+    Location loc1 = selectedLocations.getFirst();
+    Location loc2 = selectedLocations.getLast();
+    List<Edge<Location>> path;
+    if (!graph.pathExists(loc1, loc2)) {
+      Alert alert = new Alert(AlertType.ERROR, "No path exists!!1!");
+      alert.show();
+      return;
+    }
+    path = graph.getPath(loc1, loc2);
+    // From till Destination
+    String output = "";
+    double total = 0;
+    for (Edge<Location> e : path) {
+      output += "to " + e.getDestination().getName() + " by " + e.getName() + " takes " + e.getWeight() + "\n";
+      total += e.getWeight();
+    }
+    output += "total " + total;
+    Alert alert = new Alert(AlertType.INFORMATION, output);
+    alert.setHeaderText("The Path from " + loc1.getName() + " to " + loc2.getName() + ":");
+    alert.show();
   }
 
   public void render() {
@@ -134,13 +225,13 @@ public class AppController {
       for (Edge<Location> edge : graph.getEdgesFrom(loc)) {
         Location destination = (Location) edge.getDestination();
         Line line = new Line(loc.getX(), loc.getY(), destination.getX(), destination.getY());
-        imageContainer.getImageContainer().getChildren().addLast(line);
+        imageContainer.getImageContainer().getChildren().addFirst(line);
       }
     }
   }
 
   private Optional<String[]> connectionDialog(String title, String header, boolean isNameEditable,
-      boolean isTimeEditable) {
+      boolean isTimeEditable, String defaultStringText, String defaultTimeText) {
 
     Dialog<String[]> dialog = new Dialog<>();
     dialog.setTitle(title);
@@ -154,10 +245,10 @@ public class AppController {
     grid.setHgap(10);
     grid.setVgap(10);
     grid.add(new Label("Name:"), 0, 0);
-    TextField nameInputField = new TextField();
+    TextField nameInputField = new TextField(defaultStringText);
     grid.add(nameInputField, 1, 0);
     grid.add(new Label("Time:"), 0, 1);
-    TextField timeInputField = new TextField();
+    TextField timeInputField = new TextField(defaultTimeText);
     grid.add(timeInputField, 1, 1);
 
     nameInputField.setEditable(isNameEditable);
@@ -177,25 +268,29 @@ public class AppController {
             : null);
 
     String[] input = dialog.showAndWait().orElse(null);
-
-    String name = input[0].trim();
+    String name;
+    try {
+      name = input[0].trim();
+    } catch (Exception e) {
+      return Optional.empty();
+    }
     int weight = 0;
 
     if (name.isBlank()) {
       createErrorPopup(AlertType.ERROR, "Fel input i namn", "skriv in ett namn.");
-      return null;
+      return Optional.empty();
     }
     try {
       weight = Integer.parseInt(input[1].trim());
     } catch (Exception e) {
       createErrorPopup(AlertType.ERROR, "Fel input i tid", "Skriv in ett nummer som tid.");
-      return null;
+      return Optional.empty();
     }
     if (weight <= 0) {
       createErrorPopup(AlertType.ERROR, "Fel input i tid", "Tiden får inte vara 0 eller negativt.");
-      return null;
+      return Optional.empty();
     }
-    return Optional.ofNullable(dialog.showAndWait().orElse(null));
+    return Optional.ofNullable(input);
   }
 
   private void createErrorPopup(AlertType type, String headerText, String contentText) {
@@ -220,7 +315,9 @@ public class AppController {
     String fileName = result.get().trim();
     String imagePath = imageContainer.getImage().getUrl();
 
-    Path path = Paths.get(System.getProperty("user.home"), "Documents", fileName + ".graph");
+    Path path = Paths.get(System.getProperty("user.dir"), fileName + ".graph");
+    System.out.println(path.toString());
+
     File file = path.toFile();
 
     try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
@@ -237,7 +334,55 @@ public class AppController {
         }
       }
     } catch (Exception e) {
-      // TODO: Nån bra Exception.
+      System.out.println("Exception Här pls");
+    }
+    Alert alert = new Alert(AlertType.CONFIRMATION, "YES!");
+    alert.show();
+  }
+
+  public void openMap() {
+    // file
+    FileChooser fileChooser = new FileChooser();
+    fileChooser.setTitle("New Map");
+
+    fileChooser.getExtensionFilters().add(
+        new FileChooser.ExtensionFilter("GRAPH", "*.graph"));
+    File file = fileChooser.showOpenDialog(stage);
+    if (file == null || !file.exists()) {
+      return;
+    }
+    // file
+
+    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+      File imageFile = new File(reader.readLine());
+      loadMapImage(imageFile);
+      // line 1
+      System.out.println("line1 complete \n " + imageFile.getName());
+      Pattern pattern = Pattern.compile("(\\w+);(\\d+);(\\d+);");
+      Matcher matcher = pattern.matcher(reader.readLine());
+
+      while (matcher.find()) {
+        String name = matcher.group(1);
+        int x = Integer.parseInt(matcher.group(2));
+        int y = Integer.parseInt(matcher.group(3));
+        Location l = new Location(this, name, x, y);
+        graph.add(l);
+      }
+      System.out.println("Line2 Complete" + "\n" + graph.toString());
+      // line 2
+      String line;
+      while ((line = reader.readLine()) != null) {
+        String[] e = line.split(";");
+        Location l1 = graph.getNode(e[0]);
+        Location l2 = graph.getNode(e[1]);
+        String name = e[2];
+        int weight = Integer.parseInt(e[3]);
+
+        graph.connect(l1, l2, name, weight);
+      }
+      // pls funka
+    } catch (Exception e) {
+      System.out.println(e);
     }
 
   }

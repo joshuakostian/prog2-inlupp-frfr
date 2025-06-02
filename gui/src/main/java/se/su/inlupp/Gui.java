@@ -15,7 +15,7 @@ public class Gui extends Application {
     BorderPane root = new BorderPane();
     ImageContainer imageContainer = new ImageContainer(stage);
 
-    AppController ctrl = new AppController(imageContainer);
+    AppController ctrl = new AppController(imageContainer, stage);
 
     MenuBar fileMenu = new FileMenu(ctrl, stage).getFileMenu();
     MapMenu mapMenu = new MapMenu(ctrl, stage);

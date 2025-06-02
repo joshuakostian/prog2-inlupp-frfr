@@ -13,6 +13,8 @@ public interface Graph<T> {
   void setConnectionWeight(T node1, T node2, int weight);
 
   Set<T> getNodes();
+  
+  T getNode(String name);
 
   Collection<Edge<T>> getEdgesFrom(T node);
 
