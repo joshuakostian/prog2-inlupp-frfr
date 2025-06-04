@@ -1,9 +1,12 @@
+// PROG2 VT2025, inlämningsuppgift, del 2
+// Grupp 269
+// Ville Viljanen vivi8475
+// Joshua Kostian 5833
+// Carl Thomasson cath8913
+
 package se.su.inlupp;
 
 import javafx.scene.layout.Pane;
-
-import java.util.Comparator;
-
 import javafx.scene.control.Label;
 import javafx.scene.shape.Circle;
 import javafx.scene.paint.*;
